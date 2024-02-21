@@ -1,0 +1,58 @@
+---
+- name: "MySQL {{ mysql_ver_maj_min }} CIS {{ mysql57cis_rule_7_3_id }} | Reset Rule Result to default value"
+  ansible.builtin.set_fact:
+    mysql57cis_rule_result: "FAILED"
+
+- name: "MySQL {{ mysql_ver_maj_min }} CIS {{ mysql57cis_rule_7_3_id }} | Set Fact Rule ID"
+  ansible.builtin.set_fact:
+    mysql_cis_rule_id: "{{ mysql57cis_rule_7_3_id | default('Missing Rule ID') }}"
+
+- name: "MySQL {{ mysql_ver_maj_min }} CIS {{ mysql57cis_rule_7_3_id }} | Set Fact Rule Name"
+  ansible.builtin.set_fact:
+    mysql_cis_rule_name: "{{ mysql57cis_rule_7_3_name }}"
+
+- name: "MySQL {{ mysql_ver_maj_min }} CIS {{ mysql57cis_rule_7_3_id }} | AUDIT | {{ mysql_cis_rule_name }}"
+  tags:
+    - audit
+    - level1-mysql
+    - rule_7.3
+  when: 
+    - mysql57cis_rule_7_3
+  block:
+    - name: "MySQL {{ mysql_ver_maj_min }} CIS {{ mysql57cis_rule_7_3_id }} | AUDIT | {{ mysql_cis_rule_name }} | Gather mode info"
+      community.mysql.mysql_query:
+        query: 
+          - SELECT @@global.sql_mode AS global
+          - SELECT @@session.sql_mode AS session
+      register: current_sql_mode
+    
+    - ansible.builtin.set_fact:
+        mode_list: "{{ mode_list|default([]) + item|dict2items|map(attribute='value') }}"
+      loop: "{{ current_sql_mode['query_result'] | flatten }}"
+
+    - name: "MySQL {{ mysql_ver_maj_min }} CIS {{ mysql57cis_rule_7_3_id }} | AUDIT | {{ mysql_cis_rule_name }}| Compare plugin value"
+      ansible.builtin.debug:
+        msg: "Currently 'NO_AUTO_CREATE_USER' is set and does not meet the minimum requirement of the benchmark. Result should not include 'NO_AUTO_CREATE_USER' in query results."
+      when:
+        - "'no_auto_create_user' in mode_list | lower"
+
+    - name: "MySQL {{ mysql_ver_maj_min }} CIS {{ mysql57cis_rule_7_3_id }} | AUDIT | {{ mysql_cis_rule_name }} | Set Rule Result"
+      ansible.builtin.set_fact:
+        mysql57cis_rule_result: "PASSED"
+      when: 
+        - "'no_auto_create_user' not in mode_list | lower"
+    
+    - name: "MySQL {{ mysql_ver_maj_min }} CIS {{ mysql57cis_rule_7_3_id }} | AUDIT | {{ mysql_cis_rule_name }} | Set Rule Result"
+      ansible.builtin.set_fact:
+        mysql_cis_rule_result: "{{ mysql57cis_rule_result }}"
+
+    - name: "MySQL {{ mysql_ver_maj_min }} CIS {{ mysql57cis_rule_7_3_id }} | AUDIT | {{ mysql_cis_rule_name }} | Add {{ mysql_cis_rule_id }} result to WARNING Report"
+      ansible.builtin.include_tasks:
+        file: warning-audit-report.yml
+      when:
+        - "'no_auto_create_user' in mode_list | lower"
+
+    - name: "MySQL {{ mysql_ver_maj_min }} CIS {{ mysql57cis_rule_7_3_id }} | AUDIT | {{ mysql_cis_rule_name }} | Add {{ mysql_cis_rule_id }} result to FULL Report"
+      ansible.builtin.include_tasks:
+        file: full-report.yml
+...

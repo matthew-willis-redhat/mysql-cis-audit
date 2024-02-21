@@ -1,0 +1,18 @@
+---
+- name: MySQL CIS Audit Playbook
+  hosts: all
+  gather_facts: false
+  module_defaults:
+    community.mysql.mysql_info:
+      login_port: "{{ mysql_login_port }}"
+      login_user: "{{ mysql_login_user }}"
+      login_password: "{{ mysql_login_password }}"
+    community.mysql.mysql_query:
+      login_port: "{{ mysql_login_port }}"
+      login_user: "{{ mysql_login_user }}"
+      login_password: "{{ mysql_login_password }}"
+
+  tasks:
+    - name: "[INCLUDE_ROLE] - Include mysql-cis-audit role"
+      ansible.builtin.include_role:
+        name: mysql-cis-audit

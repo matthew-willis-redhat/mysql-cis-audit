@@ -1,0 +1,28 @@
+---
+- name: "SECTION | {{ mysql57cis_rule_9_2_id }} | {{ mysql57cis_rule_9_2_name }}"
+  ansible.builtin.include_tasks: cis_9.2.yml
+  vars:
+    mysql57cis_rule_9_2_name: "Ensure 'MASTER_SSL_VERIFY_SERVER_CERT' Is Set to 'YES' or '1'"
+  when:
+    - mysql57cis_rule_9_2
+  tags:
+    - mysql57cis_rule_9_2
+
+- name: "SECTION | {{ mysql57cis_rule_9_4_id }} | {{ mysql57cis_rule_9_4_name }}"
+  ansible.builtin.include_tasks: cis_9.4.yml
+  vars:
+    mysql57cis_rule_9_4_name: "Ensure 'super_priv' is Not Set to 'Y' for Replication Users"
+  when:
+    - mysql57cis_rule_9_4
+  tags:
+    - mysql57cis_rule_9_4
+
+- name: "SECTION | {{ mysql57cis_rule_9_5_id }} | {{ mysql57cis_rule_9_5_name }}"
+  ansible.builtin.include_tasks: cis_9.5.yml
+  vars:
+    mysql57cis_rule_9_5_name: "Ensure No Replication Users Have Wildcard Hostnames"
+  when:
+    - mysql57cis_rule_9_5
+  tags:
+    - mysql57cis_rule_9_5
+...

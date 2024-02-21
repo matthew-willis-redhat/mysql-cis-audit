@@ -1,0 +1,6 @@
+---
+- name: "MySQL {{ mysql_ver_maj_min }} CIS {{ mysql_cis_rule_id }} | AUDIT | {{ mysql_cis_rule_name }} | Set fact for rule report"
+  ansible.builtin.set_fact:
+    full_rule_report: "{{ full_rule_report + [ mysql_cis_rule_result + ': ' + mysql_cis_rule_id + ' - ' +  mysql_cis_rule_name ] }}"
+    full_rule_count: "{{ full_rule_count | int + 1 }}"
+...

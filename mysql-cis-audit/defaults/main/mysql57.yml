@@ -1,0 +1,114 @@
+---
+# defaults file for mysql-cis-audit - MySQL 5.7
+
+---
+# Vars for MySQL 5.7
+mysql57cis_password_lifetime: 365
+mysql57cis_password_policy: MEDIUM
+mysql57cis_local_infile: "OFF"
+mysql57cis_have_symlink: DISABLED
+mysql57cis_innodb_memcache:
+mysql57cis_secure_file_priv: /var/lib/mysql-files/
+mysql57cis_log_error: /u01/log/mysqld.log
+mysql57cis_audit_plugin: FORCE_PLUS_PERMANENT
+mysql57cis_default_authentication_plugin: caching_sha2_password
+mysql57cis_accounts_with_no_passwords:
+mysql57cis_users_with_wildcard_hostnames:
+mysql57cis_users_with_annoymous_accounts:
+mysql57cis_require_secure_transport: 0
+mysql57cis_have_ssl: "YES"
+
+# Default Rule Result - Overwrite variable in benchmark task
+mysql57cis_rule_result: FAILED
+
+# Set to true for remediation tasks
+# As of 01/24/24, no remediation tasks are being applied
+mysql57cis_level_1_patch: false
+
+# Enable/Disable full sections toggle
+# Set to true will run that section, set to false will skip section
+mysql57cis_section_2: true
+mysql57cis_section_4: true
+mysql57cis_section_6: true
+mysql57cis_section_7: true
+mysql57cis_section_8: true
+mysql57cis_section_9: true
+
+mysql57cis_level_1: true
+mysql57cis_level_2: true
+
+# Section 2
+# Installation and Planning
+mysql57cis_rule_2_6: true
+mysql57cis_rule_2_7: true
+
+# Section 4
+# General
+mysql57cis_rule_4_4: true
+mysql57cis_rule_4_6: true
+mysql57cis_rule_4_7: true
+mysql57cis_rule_4_8: true
+
+# Section 6
+# Auditing and Logging
+mysql57cis_rule_6_1: true
+mysql57cis_rule_6_8: true
+
+# Section 7
+# Authentication
+mysql57cis_rule_7_1: true
+mysql57cis_rule_7_3: true
+mysql57cis_rule_7_4: true
+mysql57cis_rule_7_5: true
+mysql57cis_rule_7_7: true
+mysql57cis_rule_7_8: true
+
+# Section 8
+# Network
+mysql57cis_rule_8_1: true
+mysql57cis_rule_8_2: true
+
+# Section 9
+# Replication
+mysql57cis_rule_9_2: true
+mysql57cis_rule_9_4: true
+mysql57cis_rule_9_5: true
+
+# Rule IDs
+
+# Section 2
+# Installation and Planning
+mysql57cis_rule_2_6_id: "2.6"
+mysql57cis_rule_2_7_id: "2.7"
+
+# Section 4
+# General
+mysql57cis_rule_4_4_id: "4.4"
+mysql57cis_rule_4_6_id: "4.6"
+mysql57cis_rule_4_7_id: "4.7"
+mysql57cis_rule_4_8_id: "4.8"
+
+# Section 6
+# Auditing and Logging
+mysql57cis_rule_6_1_id: "6.1"
+mysql57cis_rule_6_8_id: "6.8"
+
+# Section 7
+# Authentication
+mysql57cis_rule_7_1_id: "7.1"
+mysql57cis_rule_7_3_id: "7.3"
+mysql57cis_rule_7_4_id: "7.4"
+mysql57cis_rule_7_5_id: "7.5"
+mysql57cis_rule_7_7_id: "7.7"
+mysql57cis_rule_7_8_id: "7.8"
+
+# Section 8
+# Network
+mysql57cis_rule_8_1_id: "8.1"
+mysql57cis_rule_8_2_id: "8.2"
+
+# Section 9
+# Replication
+mysql57cis_rule_9_2_id: "9.2"
+mysql57cis_rule_9_4_id: "9.4"
+mysql57cis_rule_9_5_id: "9.5"

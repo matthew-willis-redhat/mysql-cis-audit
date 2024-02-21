@@ -1,0 +1,55 @@
+# - name: "Include Section 2 Tasks"
+#   ansible.builtin.include_tasks: mysql80/section_2/main.yml
+#   when:
+#     - mysql80cis_section_2
+#   tags:
+#     - mysql80cis_section_2
+
+# - name: "Include Section 3 Tasks"
+#   ansible.builtin.include_tasks: mysql80/section_3/main.yml
+#   when:
+#     - mysql80cis_section_3
+#   tags:
+#     - mysql80cis_section_3
+
+# - name: "Include Section 4 Tasks"
+#   ansible.builtin.include_tasks: mysql80/section_4/main.yml
+#   when:
+#     - mysql80cis_section_4
+#   tags:
+#     - mysql80cis_section_4
+
+# - name: "Include Section 5 Tasks"
+#   ansible.builtin.include_tasks: mysql80/section_5/main.yml
+#   when:
+#     - mysql80cis_section_5
+#   tags:
+#     - mysql80cis_section_5
+
+# - name: "Include Section 6 Tasks"
+#   ansible.builtin.include_tasks: mysql80/section_6/main.yml
+#   when:
+#     - mysql80cis_section_6
+#   tags:
+#     - mysql80cis_section_6
+
+# - name: "Include Section 7 Tasks"
+#   ansible.builtin.include_tasks: mysql80/section_7/main.yml
+#   when:
+#     - mysql80cis_section_7
+#   tags:
+#     - mysql80cis_section_7
+
+# - name: "Include Section 8 Tasks"
+#   ansible.builtin.include_tasks: mysql80/section_8/main.yml
+#   when:
+#     - mysql80cis_section_8
+#   tags:
+#     - mysql80cis_section_8
+
+# - name: "Include Section 9 Tasks"
+#   ansible.builtin.include_tasks: mysql80/section_9/main.yml
+#   when:
+#     - mysql80cis_section_9
+#   tags:
+#     - mysql80cis_section_9

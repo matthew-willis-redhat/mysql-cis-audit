@@ -1,0 +1,19 @@
+---
+- name: "SECTION | {{ mysql57cis_rule_2_6_id }} | {{ mysql57cis_rule_2_6_name }}"
+  ansible.builtin.include_tasks: cis_2.6.yml
+  vars:
+    mysql57cis_rule_2_6_name: "Ensure 'password_lifetime' is Less Than or Equal to 365"
+  when:
+    - mysql57cis_rule_2_6
+  tags:
+    - mysql57cis_rule_2_6
+
+- name: "SECTION | {{ mysql57cis_rule_2_7_id }} | {{ mysql57cis_rule_2_7_name }}"
+  ansible.builtin.include_tasks: cis_2.7.yml
+  vars:
+    mysql57cis_rule_2_7_name: "Ensure Password Complexity is Configured"
+  when:
+    - mysql57cis_rule_2_7
+  tags:
+    - mysql57cis_rule_2_7
+...

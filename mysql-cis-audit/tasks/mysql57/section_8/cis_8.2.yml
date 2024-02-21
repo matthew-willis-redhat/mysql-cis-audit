@@ -1,0 +1,58 @@
+---
+- name: "MySQL {{ mysql_ver_maj_min }} CIS {{ mysql57cis_rule_8_2_id }} | Reset Rule Result to default value"
+  ansible.builtin.set_fact:
+    mysql57cis_rule_result: "FAILED"
+
+- name: "MySQL {{ mysql_ver_maj_min }} CIS {{ mysql57cis_rule_8_2_id }} | Set Fact Rule ID"
+  ansible.builtin.set_fact:
+    mysql_cis_rule_id: "{{ mysql57cis_rule_8_2_id | default('Missing Rule ID') }}"
+
+- name: "MySQL {{ mysql_ver_maj_min }} CIS {{ mysql57cis_rule_8_2_id }} | Set Fact Rule Name"
+  ansible.builtin.set_fact:
+    mysql_cis_rule_name: "{{ mysql57cis_rule_8_2_name }}"
+
+- name: "MySQL {{ mysql_ver_maj_min }} CIS {{ mysql57cis_rule_8_2_id }} | AUDIT | {{ mysql_cis_rule_name }}"
+  tags:
+    - audit
+    - level1-mysql
+    - rule_8.2
+  when: 
+    - mysql57cis_rule_8_2
+  block:
+    - name: "MySQL {{ mysql_ver_maj_min }} CIS {{ mysql57cis_rule_8_2_id }} | AUDIT | {{ mysql_cis_rule_name }} | Gather secure transport info"
+      community.mysql.mysql_query:
+        query: SELECT user, host, ssl_type FROM mysql.user WHERE NOT HOST IN ('::1', '127.0.0.1', 'localhost')
+      register: current_ssl_type
+
+    - name: "MySQL {{ mysql_ver_maj_min }} CIS {{ mysql57cis_rule_8_2_id }} | AUDIT | {{ mysql_cis_rule_name }} | Select value from query"
+      ansible.builtin.set_fact:
+        current_user_ssl_list: "{{ current_user_ssl_list | default([]) + current_ssl_type['query_result'][0] | rejectattr('ssl_type', 'equalto', 'ANY') or rejectattr('ssl_type', 'equalto', 'X509') or rejectattr('ssl_type', 'equalto', 'SPECIFIED') }}"
+      when: 
+        - current_ssl_type['query_result'] | flatten | length > 0
+
+    - name: "MySQL {{ mysql_ver_maj_min }} CIS {{ mysql57cis_rule_8_2_id }} | AUDIT | {{ mysql_cis_rule_name }} | Compare plugin value"
+      ansible.builtin.debug:
+        msg: "Current query results do not meet the minimum requirement of the benchmark. Result should not have improperly set SSL types on user accounts."
+      when:
+        - current_user_ssl_list | length > 0
+    
+    - name: "MySQL {{ mysql_ver_maj_min }} CIS {{ mysql57cis_rule_8_2_id }} | AUDIT | {{ mysql_cis_rule_name }} | Set Rule Result"
+      ansible.builtin.set_fact:
+        mysql57cis_rule_result: "PASSED"
+      when: 
+        - current_user_ssl_list | length == 0
+
+    - name: "MySQL {{ mysql_ver_maj_min }} CIS {{ mysql57cis_rule_8_2_id }} | AUDIT | {{ mysql_cis_rule_name }} | Set Rule Result"
+      ansible.builtin.set_fact:
+        mysql_cis_rule_result: "{{ mysql57cis_rule_result }}"
+
+    - name: "MySQL {{ mysql_ver_maj_min }} CIS {{ mysql57cis_rule_8_2_id }} | AUDIT | {{ mysql_cis_rule_name }} | Add {{ mysql_cis_rule_id }} result to WARNING Report"
+      ansible.builtin.include_tasks:
+        file: warning-audit-report.yml
+      when: 
+        - current_user_ssl_list | length > 0
+
+    - name: "MySQL {{ mysql_ver_maj_min }} CIS {{ mysql57cis_rule_8_2_id }} | AUDIT | {{ mysql_cis_rule_name }} | Add {{ mysql_cis_rule_id }} result to FULL Report"
+      ansible.builtin.include_tasks:
+        file: full-report.yml
+...

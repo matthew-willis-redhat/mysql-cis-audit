@@ -1,0 +1,13 @@
+---
+# defaults file for mysql-cis-audit
+
+mysql_login_user:
+mysql_login_password:
+
+# Used to control warning summary
+warn_rule_report: []
+warn_rule_count: 0
+
+# Used to control full summary
+full_rule_report: []
+full_rule_count: 0

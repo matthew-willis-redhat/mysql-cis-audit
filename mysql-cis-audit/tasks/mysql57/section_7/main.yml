@@ -1,0 +1,55 @@
+---
+- name: "SECTION | {{ mysql57cis_rule_7_1_id }} | {{ mysql57cis_rule_7_1_name }}"
+  ansible.builtin.include_tasks: cis_7.1.yml
+  vars:
+    mysql57cis_rule_7_1_name: "Ensure default_authentication_plugin is Set to a Secure Option"
+  when:
+    - mysql57cis_rule_7_1
+  tags:
+    - mysql57cis_rule_7_1
+
+- name: "SECTION | {{ mysql57cis_rule_7_3_id }} | {{ mysql57cis_rule_7_3_name }}"
+  ansible.builtin.include_tasks: cis_7.3.yml
+  vars:
+    mysql57cis_rule_7_3_name: "Ensure 'sql_mode' Contains 'NO_AUTO_CREATE_USER'"
+  when:
+    - mysql57cis_rule_7_3
+  tags:
+    - mysql57cis_rule_7_3
+
+- name: "SECTION | {{ mysql57cis_rule_7_4_id }} | {{ mysql57cis_rule_7_4_name }}"
+  ansible.builtin.include_tasks: cis_7.4.yml
+  vars:
+    mysql57cis_rule_7_4_name: "Ensure Passwords are Set for All MySQL Accounts"
+  when:
+    - mysql57cis_rule_7_4
+  tags:
+    - mysql57cis_rule_7_4
+
+- name: "SECTION | {{ mysql57cis_rule_7_5_id }} | {{ mysql57cis_rule_7_5_name }}"
+  ansible.builtin.include_tasks: cis_7.5.yml
+  vars:
+    mysql57cis_rule_7_5_name: "Set 'default_password_lifetime' to Require a Yearly Password Change"
+  when:
+    - mysql57cis_rule_7_5
+  tags:
+    - mysql57cis_rule_7_5
+
+- name: "SECTION | {{ mysql57cis_rule_7_7_id }} | {{ mysql57cis_rule_7_7_name }}"
+  ansible.builtin.include_tasks: cis_7.7.yml
+  vars:
+    mysql57cis_rule_7_7_name: "Ensure No Users Have Wildcard Hostnames"
+  when:
+    - mysql57cis_rule_7_7
+  tags:
+    - mysql57cis_rule_7_7
+
+- name: "SECTION | {{ mysql57cis_rule_7_8_id }} | {{ mysql57cis_rule_7_8_name }}"
+  ansible.builtin.include_tasks: cis_7.8.yml
+  vars:
+    mysql57cis_rule_7_8_name: "Ensure No Anonymous Accounts Exist"
+  when:
+    - mysql57cis_rule_7_8
+  tags:
+    - mysql57cis_rule_7_8
+...

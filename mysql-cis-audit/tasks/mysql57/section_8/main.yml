@@ -1,0 +1,19 @@
+---
+- name: "SECTION | {{ mysql57cis_rule_8_1_id }} | {{ mysql57cis_rule_8_1_name }}"
+  ansible.builtin.include_tasks: cis_8.1.yml
+  vars:
+    mysql57cis_rule_8_1_name: "Ensure 'require_secure_transport' is Set to 'ON' and/or 'have_ssl' is Set to 'YES'"
+  when:
+    - mysql57cis_rule_8_1
+  tags:
+    - mysql57cis_rule_8_1
+
+- name: "SECTION | {{ mysql57cis_rule_8_2_id }} | {{ mysql57cis_rule_8_2_name }}"
+  ansible.builtin.include_tasks: cis_8.2.yml
+  vars:
+    mysql57cis_rule_8_2_name: "Ensure 'ssl_type' is Set to 'ANY', 'X509', or 'SPECIFIED' for All Remote Users"
+  when:
+    - mysql57cis_rule_8_2
+  tags:
+    - mysql57cis_rule_8_2
+...

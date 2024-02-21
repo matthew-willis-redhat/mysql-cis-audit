@@ -1,0 +1,52 @@
+---
+- name: "MySQL {{ mysql_ver_maj_min }} CIS {{ mysql57cis_rule_7_8_id }} | Reset Rule Result to default value"
+  ansible.builtin.set_fact:
+    mysql57cis_rule_result: "FAILED"
+
+- name: "MySQL {{ mysql_ver_maj_min }} CIS {{ mysql57cis_rule_7_8_id }} | Set Fact Rule ID"
+  ansible.builtin.set_fact:
+    mysql_cis_rule_id: "{{ mysql57cis_rule_7_8_id | default('Missing Rule ID') }}"
+
+- name: "MySQL {{ mysql_ver_maj_min }} CIS {{ mysql57cis_rule_7_8_id }} | Set Fact Rule Name"
+  ansible.builtin.set_fact:
+    mysql_cis_rule_name: "{{ mysql57cis_rule_7_8_name }}"
+
+- name: "MySQL {{ mysql_ver_maj_min }} CIS {{ mysql57cis_rule_7_8_id }} | AUDIT | Ensure No Anonymous Accounts Exist"
+  tags:
+    - audit
+    - level1-mysql
+    - rule_7.8
+  when: 
+    - mysql57cis_rule_7_8
+  block:
+    - name: "MySQL {{ mysql_ver_maj_min }} CIS {{ mysql57cis_rule_7_8_id }} | AUDIT | {{ mysql_cis_rule_name }} | Gather account info"
+      community.mysql.mysql_query:
+        query: SELECT user,host FROM mysql.user WHERE user = ''
+      register: current_users_with_annoymous_accounts
+
+    - name: "MySQL {{ mysql_ver_maj_min }} CIS {{ mysql57cis_rule_7_8_id }} | AUDIT | {{ mysql_cis_rule_name }} | Compare plugin value"
+      ansible.builtin.debug:
+        msg: "Current query results do not meet the minimum requirement of the benchmark of no rows returned. Result should not make use of anonymous accounts."
+      when:
+        - current_users_with_annoymous_accounts['query_result'] | flatten | length > 0
+
+    - name: "MySQL {{ mysql_ver_maj_min }} CIS {{ mysql57cis_rule_7_8_id }} | AUDIT | {{ mysql_cis_rule_name }} | Set Rule Result"
+      ansible.builtin.set_fact:
+        mysql57cis_rule_result: "PASSED"
+      when: 
+        - current_users_with_annoymous_accounts['query_result'] | flatten | length == 0
+
+    - name: "MySQL {{ mysql_ver_maj_min }} CIS {{ mysql57cis_rule_7_8_id }} | AUDIT | {{ mysql_cis_rule_name }} | Set Rule Result"
+      ansible.builtin.set_fact:
+        mysql_cis_rule_result: "{{ mysql57cis_rule_result }}"
+
+    - name: "MySQL {{ mysql_ver_maj_min }} CIS {{ mysql57cis_rule_7_8_id }} | AUDIT | {{ mysql_cis_rule_name }} | Add {{ mysql_cis_rule_id }} result to WARNING Report"
+      ansible.builtin.include_tasks:
+        file: warning-audit-report.yml
+      when: 
+        - current_users_with_annoymous_accounts['query_result'] | flatten | length > 0
+
+    - name: "MySQL {{ mysql_ver_maj_min }} CIS {{ mysql57cis_rule_7_8_id }} | AUDIT | {{ mysql_cis_rule_name }} | Add {{ mysql_cis_rule_id }} result to FULL Report"
+      ansible.builtin.include_tasks:
+        file: full-report.yml
+...

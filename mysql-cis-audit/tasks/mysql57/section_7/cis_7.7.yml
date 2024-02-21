@@ -1,0 +1,52 @@
+---
+- name: "MySQL {{ mysql_ver_maj_min }} CIS {{ mysql57cis_rule_7_7_id }} | Reset Rule Result to default value"
+  ansible.builtin.set_fact:
+    mysql57cis_rule_result: "FAILED"
+
+- name: "MySQL {{ mysql_ver_maj_min }} CIS {{ mysql57cis_rule_7_7_id }} | Set Fact Rule ID"
+  ansible.builtin.set_fact:
+    mysql_cis_rule_id: "{{ mysql57cis_rule_7_7_id | default('Missing Rule ID') }}"
+
+- name: "MySQL {{ mysql_ver_maj_min }} CIS {{ mysql57cis_rule_7_7_id }} | Set Fact Rule Name"
+  ansible.builtin.set_fact:
+    mysql_cis_rule_name: "{{ mysql57cis_rule_7_7_name }}"
+
+- name: "MySQL {{ mysql_ver_maj_min }} CIS {{ mysql57cis_rule_7_7_id }} | AUDIT | {{ mysql_cis_rule_name }}"
+  tags:
+    - audit
+    - level1-mysql
+    - rule_7.7
+  when: 
+    - mysql57cis_rule_7_7
+  block:
+    - name: "MySQL {{ mysql_ver_maj_min }} CIS {{ mysql57cis_rule_7_7_id }} | AUDIT | {{ mysql_cis_rule_name }} | Gather account info"
+      community.mysql.mysql_query:
+        query: SELECT user, host FROM mysql.user WHERE host = '%'
+      register: current_users_with_wildcard_hostnames
+  
+    - name: "MySQL {{ mysql_ver_maj_min }} CIS {{ mysql57cis_rule_7_7_id }} | AUDIT | {{ mysql_cis_rule_name }} | Compare plugin value"
+      ansible.builtin.debug:
+        msg: "Current 'default_authentication_plugin' query results does not meet the minimum requirement of the benchmark of no rows returned. Result should not make use of host wildcards."
+      when:
+        - current_users_with_wildcard_hostnames['query_result'] | flatten | length > 0
+
+    - name: "MySQL {{ mysql_ver_maj_min }} CIS {{ mysql57cis_rule_7_7_id }} | AUDIT | {{ mysql_cis_rule_name }} | Set Rule Result"
+      ansible.builtin.set_fact:
+        mysql57cis_rule_result: "PASSED"
+      when: 
+        - current_users_with_wildcard_hostnames['query_result'] | flatten | length == 0
+
+    - name: "MySQL {{ mysql_ver_maj_min }} CIS {{ mysql57cis_rule_7_7_id }} | AUDIT | {{ mysql_cis_rule_name }} | Set Rule Result"
+      ansible.builtin.set_fact:
+        mysql_cis_rule_result: "{{ mysql57cis_rule_result }}"
+
+    - name: "MySQL {{ mysql_ver_maj_min }} CIS {{ mysql57cis_rule_7_7_id }} | AUDIT | {{ mysql_cis_rule_name }} | Add {{ mysql_cis_rule_id }} result to WARNING Report"
+      ansible.builtin.include_tasks:
+        file: warning-audit-report.yml
+      when: 
+        - current_users_with_wildcard_hostnames['query_result'] | flatten | length > 0
+
+    - name: "MySQL {{ mysql_ver_maj_min }} CIS {{ mysql57cis_rule_7_7_id }} | AUDIT | {{ mysql_cis_rule_name }} | Add {{ mysql_cis_rule_id }} result to FULL Report"
+      ansible.builtin.include_tasks:
+        file: full-report.yml
+...

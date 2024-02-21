@@ -1,0 +1,50 @@
+---
+- name: "MySQL {{ mysql_ver_maj_min }} CIS {{ mysql57cis_rule_4_6_id }} | Reset Rule Result to default value"
+  ansible.builtin.set_fact:
+    mysql57cis_rule_result: "FAILED"
+
+- name: "MySQL {{ mysql_ver_maj_min }} CIS {{ mysql57cis_rule_4_6_id }} | Set Fact Rule ID"
+  ansible.builtin.set_fact:
+    mysql_cis_rule_id: "{{ mysql57cis_rule_4_6_id | default('Missing Rule ID') }}"
+
+- name: "MySQL {{ mysql_ver_maj_min }} CIS {{ mysql57cis_rule_4_6_id }} | Set Fact Rule Name"
+  ansible.builtin.set_fact:
+    mysql_cis_rule_name: "{{ mysql57cis_rule_4_6_name }}"
+
+- name: "MySQL {{ mysql_ver_maj_min }} CIS {{ mysql57cis_rule_4_6_id }} | AUDIT | Ensure Symbolic Links are Disabled"
+  tags:
+    - audit
+    - level1-mysql
+    - rule_4.6
+  when:
+    - mysql57cis_rule_4_6
+  block:
+    - name: "MySQL {{ mysql_ver_maj_min }} CIS {{ mysql57cis_rule_4_6_id }} | AUDIT | {{ mysql_cis_rule_name }} | Gather symbolic link info"
+      community.mysql.mysql_query:
+        query: SHOW variables LIKE 'have_symlink'
+      register: current_have_symlink    
+
+    - name: "MySQL {{ mysql_ver_maj_min }} CIS {{ mysql57cis_rule_4_6_id }} | AUDIT | {{ mysql_cis_rule_name }} | Select value from query"
+      ansible.builtin.set_fact:
+        current_have_symlink: "{{ (current_have_symlink['query_result'] | flatten | map(attribute='Value')) | first }}"
+      
+    - name: "MySQL {{ mysql_ver_maj_min }} CIS {{ mysql57cis_rule_4_6_id }} | AUDIT | {{ mysql_cis_rule_name }} | Set Rule Result"
+      ansible.builtin.set_fact:
+        mysql57cis_rule_result: "PASSED"
+      when: 
+        - current_have_symlink == mysql57cis_have_symlink
+    
+    - name: "MySQL {{ mysql_ver_maj_min }} CIS {{ mysql57cis_rule_4_6_id }} | AUDIT | {{ mysql_cis_rule_name }} | Set Rule Result"
+      ansible.builtin.set_fact:
+        mysql_cis_rule_result: "{{ mysql57cis_rule_result }}"
+
+    - name: "MySQL {{ mysql_ver_maj_min }} CIS {{ mysql57cis_rule_4_6_id }} | AUDIT | {{ mysql_cis_rule_name }} | Add {{ mysql_cis_rule_id }} result to WARNING Report"
+      ansible.builtin.include_tasks:
+        file: warning-audit-report.yml
+      when:
+        - not current_have_symlink == mysql57cis_have_symlink
+
+    - name: "MySQL {{ mysql_ver_maj_min }} CIS {{ mysql57cis_rule_4_6_id }} | AUDIT | {{ mysql_cis_rule_name }} | Add {{ mysql_cis_rule_id }} result to FULL Report"
+      ansible.builtin.include_tasks:
+        file: full-report.yml
+...

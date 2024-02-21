@@ -1,0 +1,59 @@
+---
+- name: "MySQL {{ mysql_ver_maj_min }} CIS {{ mysql57cis_rule_6_8_id }} | Reset Rule Result to default value"
+  ansible.builtin.set_fact:
+    mysql57cis_rule_result: "FAILED"
+
+- name: "MySQL {{ mysql_ver_maj_min }} CIS {{ mysql57cis_rule_6_8_id }} | Set Fact Rule ID"
+  ansible.builtin.set_fact:
+    mysql_cis_rule_id: "{{ mysql57cis_rule_6_8_id | default('Missing Rule ID') }}"
+
+- name: "MySQL {{ mysql_ver_maj_min }} CIS {{ mysql57cis_rule_6_8_id }} | Set Fact Rule Name"
+  ansible.builtin.set_fact:
+    mysql_cis_rule_name: "{{ mysql57cis_rule_6_8_name }}"
+
+- name: "MySQL {{ mysql_ver_maj_min }} CIS {{ mysql57cis_rule_6_8_id }} | AUDIT | {{ mysql_cis_rule_name }}"
+  tags:
+    - audit
+    - level1-mysql
+    - rule_6.8
+  when: 
+    - mysql57cis_rule_6_8
+  block:
+    - name: "MySQL {{ mysql_ver_maj_min }} CIS {{ mysql57cis_rule_6_8_id }} | AUDIT | {{ mysql_cis_rule_name }} | Gather plugin info"
+      community.mysql.mysql_query:
+        query: SELECT LOAD_OPTION FROM information_schema.plugins WHERE PLUGIN_NAME='audit_log'
+      register: current_audit_plugin
+
+    - name: "MySQL {{ mysql_ver_maj_min }} CIS {{ mysql57cis_rule_6_8_id }} | AUDIT | {{ mysql_cis_rule_name }} | Select value from query"
+      ansible.builtin.set_fact:
+        current_audit_plugin: "{{ (current_audit_plugin['query_result'] | flatten | map(attribute='Value')) | first }}"
+      when:
+        - current_audit_plugin['query_result'] | flatten | length > 0
+
+    - name: "MySQL {{ mysql_ver_maj_min }} CIS {{ mysql57cis_rule_6_8_id }} | AUDIT | {{ mysql_cis_rule_name }} | Compare plugin value"
+      ansible.builtin.debug:
+        msg: "Current 'audit_log' plugin query results does not meet the minimum requirement of the benchmark. Result should be 'FORCE_PLUS_PERMANENT' for query."
+      when:
+        - not current_audit_plugin == mysql57cis_audit_plugin or
+          current_audit_plugin['query_result'] | flatten | length == 0
+
+    - name: "MySQL {{ mysql_ver_maj_min }} CIS {{ mysql57cis_rule_6_8_id }} | AUDIT | {{ mysql_cis_rule_name }} | Set Rule Result"
+      ansible.builtin.set_fact:
+        mysql57cis_rule_result: "PASSED"
+      when: 
+        - current_audit_plugin == mysql57cis_audit_plugin
+    
+    - name: "MySQL {{ mysql_ver_maj_min }} CIS {{ mysql57cis_rule_6_8_id }} | AUDIT | {{ mysql_cis_rule_name }} | Set Rule Result"
+      ansible.builtin.set_fact:
+        mysql_cis_rule_result: "{{ mysql57cis_rule_result }}"
+
+    - name: "MySQL {{ mysql_ver_maj_min }} CIS {{ mysql57cis_rule_6_8_id }} | AUDIT | {{ mysql_cis_rule_name }} | Add {{ mysql_cis_rule_id }} result to WARNING Report"
+      ansible.builtin.include_tasks:
+        file: warning-audit-report.yml
+      when:
+        - not current_audit_plugin == mysql57cis_audit_plugin
+
+    - name: "MySQL {{ mysql_ver_maj_min }} CIS {{ mysql57cis_rule_6_8_id }} | AUDIT | {{ mysql_cis_rule_name }} | Add {{ mysql_cis_rule_id }} result to FULL Report"
+      ansible.builtin.include_tasks:
+        file: full-report.yml
+...

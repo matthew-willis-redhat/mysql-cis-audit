@@ -1,0 +1,41 @@
+---
+# tasks file for mysql-cis-audit
+
+- name: "[INCLUDE_TASK] - prelim.yml"
+  ansible.builtin.include_tasks:
+    file: prelim.yml
+
+- name: "[INCLUDE_TASK] - mysql57-audit.yml"
+  ansible.builtin.include_tasks:
+    file: mysql57-audit.yml
+  when:
+    - mysql_ver_maj_min == "5.7"
+
+- name: "[INCLUDE_TASK] - mysql80-audit.yml"
+  ansible.builtin.include_tasks:
+    file: mysql80-audit.yml
+  when:
+    - mysql_ver_maj_min == "8.0"
+
+# - name: If Warnings were found, output the warning count and rule IDs affected
+#   ansible.builtin.debug:
+#     msg:
+#       - "You have {{ warn_rule_count }} Warning(s) that require investigating that are related to the following benchmark ID(s):"
+#       - "============================================================================================="
+#       - "{{ warn_rule_report }}"
+#   when: warn_rule_count != 0
+#   tags:
+#     - always
+
+- name: Full MySQL CIS Compliance Report
+  ansible.builtin.debug:
+    msg:
+      - "Full MySQL {{ mysql_ver_maj_min }} CIS Compliance Report"
+      - "Hostname: {{ inventory_hostname }}"
+      - "MySQL Version: {{ mysql_ver_full }}"
+      - "Total MySQL {{ mysql_ver_maj_min }} CIS Benchmark Checks: {{ full_rule_count }}"
+      - "Total Warning(s)/Failure(s): {{ warn_rule_count }}"
+      - "============================================================================================="
+      - "{{ full_rule_report }}"
+  when: 
+    - full_rule_report is defined 

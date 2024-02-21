@@ -1,0 +1,58 @@
+---
+- name: "MySQL {{ mysql_ver_maj_min }} CIS {{ mysql57cis_rule_4_8_id }} | Reset Rule Result to default value"
+  ansible.builtin.set_fact:
+    mysql57cis_rule_result: "FAILED"
+
+- name: "MySQL {{ mysql_ver_maj_min }} CIS {{ mysql57cis_rule_4_8_id }} | Set Fact Rule ID"
+  ansible.builtin.set_fact:
+    mysql_cis_rule_id: "{{ mysql57cis_rule_4_8_id | default('Missing Rule ID') }}"
+
+- name: "MySQL {{ mysql_ver_maj_min }} CIS {{ mysql57cis_rule_4_8_id }} | Set Fact Rule Name"
+  ansible.builtin.set_fact:
+    mysql_cis_rule_name: "{{ mysql57cis_rule_4_8_name }}"
+
+- name: "MySQL {{ mysql_ver_maj_min }} CIS {{ mysql57cis_rule_4_8_id }} | AUDIT | {{ mysql_cis_rule_name }}"
+  tags:
+    - audit
+    - level1-mysql
+    - rule_4.8
+  when: 
+    - mysql57cis_rule_4_8
+  block:
+    - name: "MySQL {{ mysql_ver_maj_min }} CIS {{ mysql57cis_rule_4_8_id }} | AUDIT | {{ mysql_cis_rule_name }} | Gather file info"
+      community.mysql.mysql_query:
+        query: SHOW GLOBAL VARIABLES WHERE Variable_name = 'secure_file_priv'
+      register: current_secure_file_priv
+
+    - name: "MySQL {{ mysql_ver_maj_min }} CIS {{ mysql57cis_rule_4_8_id }} | AUDIT | {{ mysql_cis_rule_name }} | Select value from query"
+      ansible.builtin.set_fact:
+        current_secure_file_priv: "{{ (current_secure_file_priv['query_result'] | flatten | map(attribute='Value')) | first }}"
+
+    - name: "MySQL {{ mysql_ver_maj_min }} CIS {{ mysql57cis_rule_4_8_id }} | AUDIT | {{ mysql_cis_rule_name }} | Compare value with benchmark"
+      ansible.builtin.debug:
+        msg: "Current 'secure_file_priv' parameter, {{ current_secure_file_priv }}, does not meet the minimum benchmark requirement of '{{ mysql57cis_secure_file_priv }}'."
+      when:
+        - not current_secure_file_priv == mysql57cis_secure_file_priv
+
+    # NEED TO CHECK FOR 'NULL'
+    # Empty string is fail, NULL is also a pass check
+    - name: "MySQL {{ mysql_ver_maj_min }} CIS {{ mysql57cis_rule_4_8_id }} | AUDIT | {{ mysql_cis_rule_name }} | Set Rule Result"
+      ansible.builtin.set_fact:
+        mysql57cis_rule_result: "PASSED"
+      when: 
+        - current_secure_file_priv == mysql57cis_secure_file_priv
+    
+    - name: "MySQL {{ mysql_ver_maj_min }} CIS {{ mysql57cis_rule_4_8_id }} | AUDIT | {{ mysql_cis_rule_name }} | Set Rule Result"
+      ansible.builtin.set_fact:
+        mysql_cis_rule_result: "{{ mysql57cis_rule_result }}"
+
+    - name: "MySQL {{ mysql_ver_maj_min }} CIS {{ mysql57cis_rule_4_8_id }} | AUDIT | {{ mysql_cis_rule_name }} | Add {{ mysql_cis_rule_id }} result to WARNING Report"
+      ansible.builtin.include_tasks:
+        file: warning-audit-report.yml
+      when:
+        - not current_secure_file_priv == mysql57cis_secure_file_priv
+
+    - name: "MySQL {{ mysql_ver_maj_min }} CIS {{ mysql57cis_rule_4_8_id }} | AUDIT | {{ mysql_cis_rule_name }} | Add {{ mysql_cis_rule_id }} result to FULL Report"
+      ansible.builtin.include_tasks:
+        file: full-report.yml
+...

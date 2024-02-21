@@ -1,0 +1,69 @@
+---
+- name: "MySQL {{ mysql_ver_maj_min }} CIS {{ mysql57cis_rule_8_1_id }} | Reset Rule Result to default value"
+  ansible.builtin.set_fact:
+    mysql57cis_rule_result: "FAILED"
+
+- name: "MySQL {{ mysql_ver_maj_min }} CIS {{ mysql57cis_rule_8_1_id }} | Set Fact Rule ID"
+  ansible.builtin.set_fact:
+    mysql_cis_rule_id: "{{ mysql57cis_rule_8_1_id | default('Missing Rule ID') }}"
+
+- name: "MySQL {{ mysql_ver_maj_min }} CIS {{ mysql57cis_rule_8_1_id }} | Set Fact Rule Name"
+  ansible.builtin.set_fact:
+    mysql_cis_rule_name: "{{ mysql57cis_rule_8_1_name }}"
+
+- name: "MySQL {{ mysql_ver_maj_min }} CIS {{ mysql57cis_rule_8_1_id }} | AUDIT | {{ mysql_cis_rule_name }}"
+  tags:
+    - audit
+    - level1-mysql
+    - rule_8.1
+  when:
+    - mysql57cis_rule_8_1
+  block:
+    - name: "MySQL {{ mysql_ver_maj_min }} CIS {{ mysql57cis_rule_8_1_id }} | AUDIT | {{ mysql_cis_rule_name }} | Gather secure transport info"
+      community.mysql.mysql_query:
+        query: select @@require_secure_transport 
+      register: current_require_secure_transport
+
+    - name: "MySQL {{ mysql_ver_maj_min }} CIS {{ mysql57cis_rule_8_1_id }} | AUDIT | {{ mysql_cis_rule_name }} | Gather ssl info"
+      community.mysql.mysql_query:
+        query: SHOW variables WHERE variable_name = 'have_ssl'
+      register: current_ssl_requirements
+
+    - name: "MySQL {{ mysql_ver_maj_min }} CIS {{ mysql57cis_rule_8_1_id }} | AUDIT | {{ mysql_cis_rule_name }} | Select value from query"
+      ansible.builtin.set_fact:
+        is_secure_transport: "{{ is_secure_transport|default([]) + item|dict2items|map(attribute='value') }}"
+      loop: "{{ current_require_secure_transport['query_result'] | flatten }}"
+
+    - name: "MySQL {{ mysql_ver_maj_min }} CIS {{ mysql57cis_rule_8_1_id }} | AUDIT | {{ mysql_cis_rule_name }} | Select value from query"
+      ansible.builtin.set_fact:
+        current_require_secure_transport: "{{ is_secure_transport | first}}"
+
+    - name: "MySQL {{ mysql_ver_maj_min }} CIS {{ mysql57cis_rule_8_1_id }} | AUDIT | {{ mysql_cis_rule_name }} | Compare query results with benchmarks"
+      ansible.builtin.debug:
+        msg: "Current query results do not meet the minimum requirement of the benchmark. Result should have SSL turned on."
+      when:
+        - not current_require_secure_transport == mysql57cis_require_secure_transport
+        - not current_ssl_requirements['query_result'] | flatten | map(attribute='Value') | first == mysql57cis_have_ssl
+
+    - name: "MySQL {{ mysql_ver_maj_min }} CIS {{ mysql57cis_rule_8_1_id }} | AUDIT | {{ mysql_cis_rule_name }} | Set Rule Result"
+      ansible.builtin.set_fact:
+        mysql57cis_rule_result: "PASSED"
+      when: 
+        - current_require_secure_transport == mysql57cis_require_secure_transport
+        - current_ssl_requirements['query_result'] | flatten | map(attribute='Value') | first == mysql57cis_have_ssl
+
+    - name: "MySQL {{ mysql_ver_maj_min }} CIS {{ mysql57cis_rule_8_1_id }} | AUDIT | {{ mysql_cis_rule_name }} | Set Rule Result"
+      ansible.builtin.set_fact:
+        mysql_cis_rule_result: "{{ mysql57cis_rule_result }}"
+
+    - name: "MySQL {{ mysql_ver_maj_min }} CIS {{ mysql57cis_rule_8_1_id }} | AUDIT | {{ mysql_cis_rule_name }} | Add {{ mysql_cis_rule_id }} result to WARNING Report"
+      ansible.builtin.include_tasks:
+        file: warning-audit-report.yml
+      when: 
+        - not current_require_secure_transport == mysql57cis_require_secure_transport
+        - not current_ssl_requirements['query_result'] | flatten | map(attribute='Value') | first == mysql57cis_have_ssl
+
+    - name: "MySQL {{ mysql_ver_maj_min }} CIS {{ mysql57cis_rule_8_1_id }} | AUDIT | {{ mysql_cis_rule_name }} | Add {{ mysql_cis_rule_id }} result to FULL Report"
+      ansible.builtin.include_tasks:
+        file: full-report.yml
+...

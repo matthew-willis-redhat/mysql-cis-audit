@@ -1,0 +1,10 @@
+---
+- name: "MySQL CIS Audit | PRELIM | Gather MySQL version from target node"
+  community.mysql.mysql_info:
+    filter: version
+  register: mysql_ver
+
+- name: "MySQL CIS Audit  | PRELIM | Set Fact MySql Version"
+  ansible.builtin.set_fact:
+    mysql_ver_maj_min: "{{ (mysql_ver['version']['full']).split('.')[0:2] | join('.') }}"
+    mysql_ver_full: "{{ mysql_ver['version']['full'] }}"

@@ -1,0 +1,19 @@
+---
+- name: "SECTION | {{ mysql57cis_rule_6_1_id }} | {{ mysql57cis_rule_6_1_name }}"
+  ansible.builtin.include_tasks: cis_6.1.yml
+  vars:
+    mysql57cis_rule_6_1_name: "Ensure 'log_error' is configured correctly"
+  when:
+    - mysql57cis_rule_6_1
+  tags:
+    - mysql57cis_rule_6_1
+
+- name: "SECTION | {{ mysql57cis_rule_6_8_id }} | {{ mysql57cis_rule_6_8_name }}"
+  ansible.builtin.include_tasks: cis_6.8.yml
+  vars:
+    mysql57cis_rule_6_8_name: "Ensure Audit Plugin is cant be unloaded"
+  when:
+    - mysql57cis_rule_6_8
+  tags:
+    - mysql57cis_rule_6_8
+...

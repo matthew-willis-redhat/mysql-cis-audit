@@ -1,0 +1,65 @@
+---
+- name: "MySQL {{ mysql_ver_maj_min }} CIS {{ mysql57cis_rule_2_7_id }} | Reset Rule Result to default value"
+  ansible.builtin.set_fact:
+    mysql57cis_rule_result: "FAILED"
+
+- name: "MySQL {{ mysql_ver_maj_min }} CIS {{ mysql57cis_rule_2_7_id }} | Set Fact Rule ID"
+  ansible.builtin.set_fact:
+    mysql_cis_rule_id: "{{ mysql57cis_rule_2_7_id | default('Missing Rule ID') }}"
+
+- name: "MySQL {{ mysql_ver_maj_min }} CIS {{ mysql57cis_rule_2_7_id }} | Set Fact Rule Name"
+  ansible.builtin.set_fact:
+    mysql_cis_rule_name: "{{ mysql57cis_rule_2_7_name }}"
+
+- name: "MySQL {{ mysql_ver_maj_min }} CIS {{ mysql57cis_rule_2_7_id }} | AUDIT | {{ mysql_cis_rule_name }}"
+  tags:
+    - audit
+    - level1-mysql
+    - rule_2.7
+  when:
+    - mysql57cis_rule_2_7
+  block:
+    - name: "MySQL {{ mysql_ver_maj_min }} CIS {{ mysql57cis_rule_2_7_id }} | AUDIT | {{ mysql_cis_rule_name }} | Gather password complexity"
+      community.mysql.mysql_query:
+        query: SELECT VARIABLE_NAME, VARIABLE_VALUE FROM performance_schema.global_variables WHERE VARIABLE_NAME like 'valid%password.policy'
+      register: current_password_policy
+
+    - name: "MySQL {{ mysql_ver_maj_min }} CIS {{ mysql57cis_rule_2_7_id }} | AUDIT | {{ mysql_cis_rule_name }} | Print password complexity policy"
+      ansible.builtin.debug:
+        msg: "Current Password Complexity: {{ current_password_policy }}"
+    
+    # - name: "MySQL {{ mysql_ver_maj_min }} CIS {{ mysql57cis_rule_2_7_id }} | AUDIT | {{ mysql_cis_rule_name }} | Print password complexity policy"
+    #   ansible.builtin.debug:
+    #     var: current_password_policy['query_result']
+
+    # - ansible.builtin.debug: 
+    #     var: current_password_policy['query_result'] | length
+
+    - name: "MySQL {{ mysql_ver_maj_min }} CIS {{ mysql57cis_rule_2_7_id }} | AUDIT | {{ mysql_cis_rule_name }} | Print Failure message"
+      ansible.builtin.debug:
+        msg: "Parameter valid_password_policy is set to {{ current_password_policy }} but should be {{ mysql57cis_password_policy }}."
+      when: 
+        - current_password_policy | length > 0 or
+          not current_password_policy == mysql57cis_password_policy
+    
+    - name: "MySQL {{ mysql_ver_maj_min }} CIS {{ mysql57cis_rule_2_7_id }} | AUDIT | {{ mysql_cis_rule_name }} | Set Rule Result"
+      ansible.builtin.set_fact:
+        mysql57cis_rule_result: "PASSED"
+      when: 
+        - current_password_policy == mysql57cis_password_policy 
+    
+    - name: "MySQL {{ mysql_ver_maj_min }} CIS {{ mysql57cis_rule_2_7_id }} | AUDIT | {{ mysql_cis_rule_name }} | Set Rule Result"
+      ansible.builtin.set_fact:
+        mysql_cis_rule_result: "{{ mysql57cis_rule_result }}"
+
+    - name: "MySQL {{ mysql_ver_maj_min }} CIS {{ mysql57cis_rule_2_7_id }} | AUDIT | {{ mysql_cis_rule_name }} | Add {{ mysql_cis_rule_id }} result to WARNING Report"
+      ansible.builtin.include_tasks:
+        file: warning-audit-report.yml
+      when: 
+        - current_password_policy | length > 0 or
+          not current_password_policy == mysql57cis_password_policy
+
+    - name: "MySQL {{ mysql_ver_maj_min }} CIS {{ mysql57cis_rule_2_7_id }} | AUDIT | {{ mysql_cis_rule_name }} | Add {{ mysql_cis_rule_id }} result to FULL Report"
+      ansible.builtin.include_tasks:
+        file: full-report.yml
+...

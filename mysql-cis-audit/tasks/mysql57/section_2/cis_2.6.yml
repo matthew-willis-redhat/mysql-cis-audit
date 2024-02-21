@@ -1,0 +1,53 @@
+---
+- name: "MySQL {{ mysql_ver_maj_min }} CIS {{ mysql57cis_rule_2_6_id }} | Reset Rule Result to default value"
+  ansible.builtin.set_fact:
+    mysql57cis_rule_result: "FAILED"
+
+- name: "MySQL {{ mysql_ver_maj_min }} CIS {{ mysql57cis_rule_2_6_id }} | Set Fact Rule ID"
+  ansible.builtin.set_fact:
+    mysql_cis_rule_id: "{{ mysql57cis_rule_2_6_id | default('Missing Rule ID') }}"
+
+- name: "MySQL {{ mysql_ver_maj_min }} CIS {{ mysql57cis_rule_2_6_id }} | Set Fact Rule Name"
+  ansible.builtin.set_fact:
+    mysql_cis_rule_name: "{{ mysql57cis_rule_2_6_name }}"
+
+- name: "MySQL {{ mysql_ver_maj_min }} CIS {{ mysql57cis_rule_2_6_id }} | AUDIT | {{ mysql_cis_rule_name }}"
+  tags:
+    - audit
+    - level1-mysql
+    - rule_2.6
+  when:
+    - mysql57cis_rule_2_6
+  block:
+    - name: "MySQL {{ mysql_ver_maj_min }} CIS {{ mysql57cis_rule_2_6_id }} | AUDIT | {{ mysql_cis_rule_name }} | Gather password lifetime"
+      community.mysql.mysql_query:
+        query: SHOW VARIABLES LIKE 'default_password_lifetime'
+      register: current_password_lifetime
+
+    - name: "MySQL {{ mysql_ver_maj_min }} CIS {{ mysql57cis_rule_2_6_id }} | AUDIT | {{ mysql_cis_rule_name }} | Set variables as integers"
+      ansible.builtin.set_fact:
+        current_password_lifetime: "{{ (current_password_lifetime['query_result'] | flatten | map(attribute='Value')) | first }}"
+
+    - name: "MySQL {{ mysql_ver_maj_min }} CIS {{ mysql57cis_rule_2_6_id }} | AUDIT | {{ mysql_cis_rule_name }} || Compare password lifetime"
+      ansible.builtin.debug:
+        msg: "Current password lifetime {{ current_password_lifetime }} does not meet the minimum requirement benchmark of {{ mysql57cis_password_lifetime }}."
+      when: current_password_lifetime | int < mysql57cis_password_lifetime | int
+
+    - name: "MySQL {{ mysql_ver_maj_min }} CIS {{ mysql57cis_rule_2_6_id }} | AUDIT | {{ mysql_cis_rule_name }} || Set Rule Result"
+      ansible.builtin.set_fact:
+        mysql57cis_rule_result: "PASSED"
+      when: current_password_lifetime | int > mysql57cis_password_lifetime | int
+
+    - name: "MySQL {{ mysql_ver_maj_min }} CIS {{ mysql57cis_rule_2_6_id }} | AUDIT | {{ mysql_cis_rule_name }} || Set Rule Result"
+      ansible.builtin.set_fact:
+        mysql_cis_rule_result: "{{ mysql57cis_rule_result }}"
+
+    - name: "MySQL {{ mysql_ver_maj_min }} CIS {{ mysql57cis_rule_2_6_id }} | AUDIT | {{ mysql_cis_rule_name }} | Add {{ mysql_cis_rule_id }} result to WARNING Report"
+      ansible.builtin.include_tasks:
+        file: warning-audit-report.yml
+      when: current_password_lifetime | int < mysql57cis_password_lifetime | int
+
+    - name: "MySQL {{ mysql_ver_maj_min }} CIS {{ mysql57cis_rule_2_6_id }} | AUDIT | {{ mysql_cis_rule_name }} | Add {{ mysql_cis_rule_id }} result to FULL Report"
+      ansible.builtin.include_tasks:
+        file: full-report.yml
+...
